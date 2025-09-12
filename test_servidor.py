@@ -91,7 +91,7 @@ def test_get_imovel_por_id(mock_connect_db, client):
 }
     assert response.get_json() == expected_response
 
-patch('utils.connect_db')
+@patch('utils.connect_db')
 def test_atualiza_imoveis(mock_connect_db): #Para rota PUT /imoveis/<id>
     
     
@@ -114,3 +114,43 @@ def test_atualiza_imoveis(mock_connect_db): #Para rota PUT /imoveis/<id>
     response = client.put("/imoveis/1", json = dados_atualizados)
     
     assert response.status_code in [200,400]
+
+@patch("utils.connect_db")  
+def test_cria_imovel_db(mock_connect_db):
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
+    dados_imovel = {
+        "logradouro": "Price Prairie",
+        "tipo_logradouro": "Travessa",
+        "bairro": "Colonton",
+        "cidade": "North Garyville",
+        "cep": "93354",
+        "tipo": "casa em condominio",
+        "valor": 260069.89,
+        "data_aquisicao": "2021-11-30"
+    }
+
+    from servidor import criar_imovel_db
+    criar_imovel_db(dados_imovel)
+
+    mock_cursor.execute.assert_called_with(
+        """
+        INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            "Price Prairie",
+            "Travessa",
+            "Colonton",
+            "North Garyville",
+            "93354",
+            "casa em condominio",
+            260069.89,
+            "2021-11-30"
+        )
+    )
+    mock_conn.commit.assert_called_once()
+    mock_conn.close.assert_called_once()
