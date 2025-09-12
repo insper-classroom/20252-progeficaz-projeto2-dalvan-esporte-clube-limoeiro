@@ -133,8 +133,8 @@ def test_cria_imovel_db(mock_connect_db):
         "data_aquisicao": "2021-11-30"
     }
 
-    from servidor import criar_imovel_db
-    criar_imovel_db(dados_imovel)
+    from servidor import cria_imovel_db
+    cria_imovel_db(dados_imovel)
 
     mock_cursor.execute.assert_called_with(
         """
