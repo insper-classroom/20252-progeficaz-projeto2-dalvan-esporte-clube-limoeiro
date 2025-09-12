@@ -82,3 +82,23 @@ def cria_imovel():
     except Exception as e:
         return jsonify({"erro": str(e)}), 400
 
+@app.route("/imoveis/tipo/<tipo>", methods=["GET"])
+def get_imoveis_por_tipo(tipo):
+    conn = utils.connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM imoveis WHERE tipo =?", (tipo,))
+    rows = cursor.fetchall()
+    imoveis = []
+    for row in rows:
+        imoveis.append({
+            "id": row[0],
+            "logradouro": row[1],
+            "tipo_logradouro": row[2],
+            "bairro": row[3],
+            "cidade": row[4],
+            "cep": row[5],
+            "tipo": row[6],
+            "valor": row[7],
+            "data_aquisicao": row[8]
+        })
+    return jsonify({"imoveis": imoveis})
