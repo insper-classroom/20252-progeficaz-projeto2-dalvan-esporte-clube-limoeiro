@@ -77,18 +77,16 @@ def test_get_imovel_por_id(mock_connect_db, client):
 
     assert response.status_code == 200
     expected_response = {
-    [
-        {
-            "id": 2,
-            "logradouro": "Price Prairie",
-            "tipo_logradouro": "Travessa",
-            "bairro": "Colonton",
-            "cidade": "North Garyville",
-            "cep": "93354",
-            "tipo": "casa em condominio",
-            "valor": 260069.89,
-            "data_aquisicao": "2021-11-30"
-        }
-    ]
+    "imovel": {
+        "id": 2,
+        "logradouro": "Price Prairie",
+        "tipo_logradouro": "Travessa",
+        "bairro": "Colonton",
+        "cidade": "North Garyville",
+        "cep": "93354",
+        "tipo": "casa em condominio",
+        "valor": 260069.89,
+        "data_aquisicao": "2021-11-30"
     }
+}
     assert response.get_json() == expected_response
