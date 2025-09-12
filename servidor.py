@@ -1,5 +1,5 @@
 # servidor.py
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import utils
 
 app = Flask(__name__)
@@ -49,3 +49,36 @@ def get_imovel_por_id(id):
         "data_aquisicao": row[8]
     }
     return jsonify({"imovel": imovel})
+
+def cria_imovel_db(dados):
+    conn = utils.connect_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            dados["logradouro"],
+            dados["tipo_logradouro"],
+            dados["bairro"],
+            dados["cidade"],
+            dados["cep"],
+            dados["tipo"],
+            dados["valor"],
+            dados["data_aquisicao"]
+        )
+    )
+    conn.commit()
+    conn.close()
+    return True
+
+@app.route("/imoveis", methods=["POST"])
+def cria_imovel():
+    dados = request.get_json()
+    try:
+        cria_imovel_db(dados)
+        return jsonify({"mensagem": "Imóvel criado com sucesso"}), 201
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 400
+
