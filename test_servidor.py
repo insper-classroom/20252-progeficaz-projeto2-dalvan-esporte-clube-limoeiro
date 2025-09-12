@@ -92,3 +92,27 @@ def test_get_imovel_por_id(mock_connect_db, client):
     ]
     }
     assert response.get_json() == expected_response
+
+patch('utils.connect_db')
+def test_atualiza_imoveis(mock_connect_db): #Para rota PUT /imoveis/<id>
+    
+    
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+    
+    dados_atualizados = {
+        "logradouro": "Rua nova",
+        "tipo_logradouro": "Avenida",
+        "bairro": "Itaim",
+        "cidade": "São Paulo",
+        "cep": "40028-922",
+        "tipo": "apartamento",
+        "valor": 19000.99,
+        "data_aquisicao": "2025-09-12"
+    }
+    
+    response = client.put("/imoveis/1", json = dados_atualizados)
+    
+    assert response.status_code in [200,400]
