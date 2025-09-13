@@ -116,3 +116,20 @@ def atualiza_imoveis(id):
     imovel = utils.row_to_imovel(row)
 
     return jsonify({"imovel": imovel})
+
+@app.route("/imoveis/<int:id>", methods=["DELETE"])
+def delete_imovel(id):
+    conn = utils.connect_db()
+    cursor = conn.cursor()
+
+    
+    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    rows = cursor.fetchall()
+    if not rows:
+        return jsonify({"imovel": None}), 404
+
+    
+    cursor.execute("DELETE FROM imoveis WHERE id=?", (id,))
+    conn.commit()
+
+    return jsonify({"mensagem": "Imóvel removido com sucesso."}), 200
