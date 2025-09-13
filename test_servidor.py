@@ -303,4 +303,52 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
     }
     assert response.get_json() == expected_response
     
+@patch("utils.connect_db")
+def test_delete_imovel_sucesso(mock_connect_db, client):
+    """Testa DELETE /imoveis/<id> quando o imóvel existe"""
+
     
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
+    
+    mock_cursor.fetchall.return_value = [
+        (1, "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000",
+         "apartamento", 500000.0, "2023-01-01")
+    ]
+
+    response = client.delete("/imoveis/1")
+
+    
+    assert response.status_code == 200
+    assert response.get_json() == {"mensagem": "Imóvel removido com sucesso."}
+
+    
+    mock_cursor.execute.assert_any_call("DELETE FROM imoveis WHERE id=?", (1,))
+    mock_conn.commit.assert_called_once()
+
+
+@patch("utils.connect_db")
+def test_delete_imovel_nao_encontrado(mock_connect_db, client):
+    """Testa DELETE /imoveis/<id> quando o imóvel não existe"""
+
+    
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
+    
+    mock_cursor.fetchall.return_value = []
+
+    response = client.delete("/imoveis/999")
+
+    
+    assert response.status_code == 404
+    assert response.get_json() == {"imovel": None}
+
+    
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=?", (999,))
+    mock_conn.commit.assert_not_called()
