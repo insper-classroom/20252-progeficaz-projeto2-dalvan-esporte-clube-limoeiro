@@ -1,4 +1,5 @@
 import pytest
+import views
 from flask import Flask
 from unittest.mock import patch, MagicMock
 from servidor import app
@@ -199,8 +200,7 @@ def test_cria_imovel_db(mock_connect_db):
         "data_aquisicao": "2021-11-30"
     }
 
-    from servidor import cria_imovel_db
-    cria_imovel_db(dados_imovel)
+    views.cria_imovel_db(dados_imovel)
 
     mock_cursor.execute.assert_called_with(
         """
