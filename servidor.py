@@ -12,7 +12,7 @@ def listar_imoveis():
     rows = cursor.fetchall()
 
     
-    imoveis = [utils.row_to_imoveis(row) for row in rows]
+    imoveis = [utils.row_to_imovel(row) for row in rows]
     
 
     return jsonify({"imoveis": imoveis})
@@ -67,7 +67,7 @@ def get_imoveis_por_tipo(tipo):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis WHERE tipo =?", (tipo,))
     rows = cursor.fetchall()
-    imoveis = [utils.row_to_imovel() for row in rows]
+    imoveis = [utils.row_to_imovel(row) for row in rows]
     
     return jsonify({"imoveis": imoveis})
 
@@ -77,7 +77,7 @@ def get_imoveis_por_cidade(cidade):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis WHERE cidade =?", (cidade,))
     rows = cursor.fetchall()
-    imoveis = [utils.row_to_imovel() for row in rows]
+    imoveis = [utils.row_to_imovel(row) for row in rows]
     
     return jsonify({"imoveis": imoveis})
 

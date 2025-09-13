@@ -92,8 +92,8 @@ def test_get_imovel_por_id(mock_connect_db, client):
     assert response.get_json() == expected_response
 
 @patch("utils.connect_db")
-def test_atualiza_imoveis(mock_connect_db, client):
-    """Testa a rota PUT /imoveis/<id> sem acessar o banco real"""
+def test_atualiza_imoveis_sucesso(mock_connect_db, client):
+    """Testa PUT /imoveis/<id> quando o imóvel existe"""
 
     
     mock_conn = MagicMock()
@@ -102,10 +102,15 @@ def test_atualiza_imoveis(mock_connect_db, client):
     mock_connect_db.return_value = mock_conn
 
     
-    mock_cursor.fetchall.side_effect = [
-        [(1, "Rua Velha", "Rua", "Centro", "São Paulo", "01000-000", "apartamento", 400000.0, "2020-01-01")],  # SELECT antes do update
-        [(1, "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000", "apartamento", 500000.0, "2023-01-01")]  # SELECT depois do update
+    mock_cursor.fetchall.return_value = [
+        (1, "Rua Velha", "Rua", "Centro", "São Paulo", "01000-000", "apartamento", 400000.0, "2020-01-01")
     ]
+
+    
+    mock_cursor.fetchone.return_value = (
+        1, "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000",
+        "apartamento", 500000.0, "2023-01-01"
+    )
 
     
     dados_atualizados = {
@@ -119,23 +124,15 @@ def test_atualiza_imoveis(mock_connect_db, client):
         "data_aquisicao": "2023-01-01"
     }
 
-    
-    response = client.put(
-        "/imoveis/1",
-        json=dados_atualizados
-    )
+    response = client.put("/imoveis/1", json=dados_atualizados)
 
     
     assert response.status_code == 200
-    expected_response = {
-        "imovel": {
-            "id": 1,
-            **dados_atualizados
-        }
+    assert response.get_json() == {
+        "imovel": {"id": 1, **dados_atualizados}
     }
-    assert response.get_json() == expected_response
 
-    # garante que UPDATE e COMMIT foram chamados
+    
     mock_cursor.execute.assert_any_call(
         """
         UPDATE imoveis
@@ -146,6 +143,42 @@ def test_atualiza_imoveis(mock_connect_db, client):
         "apartamento", 500000.0, "2023-01-01", 1
     ))
     mock_conn.commit.assert_called_once()
+
+
+@patch("utils.connect_db")
+def test_atualiza_imoveis_nao_encontrado(mock_connect_db, client):
+    """Testa PUT /imoveis/<id> quando o imóvel não existe"""
+
+    
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
+    
+    mock_cursor.fetchall.return_value = []
+
+    
+    dados_atualizados = {
+        "logradouro": "Rua Nova",
+        "tipo_logradouro": "Avenida",
+        "bairro": "Centro",
+        "cidade": "São Paulo",
+        "cep": "01000-000",
+        "tipo": "apartamento",
+        "valor": 500000.0,
+        "data_aquisicao": "2023-01-01"
+    }
+
+    response = client.put("/imoveis/999", json=dados_atualizados)
+
+    
+    assert response.status_code == 404
+    assert response.get_json() == {"imovel": None}
+
+    
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=?", (999,))
+    mock_conn.commit.assert_not_called()
 
 
 @patch("utils.connect_db")  
