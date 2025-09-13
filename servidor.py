@@ -11,20 +11,9 @@ def listar_imoveis():
     cursor.execute("SELECT * FROM imoveis")
     rows = cursor.fetchall()
 
-    # transformar tuplas do banco em dicionários
-    imoveis = []
-    for row in rows:      #Varre uma lista de tuplas.
-        imoveis.append({
-            "id": row[0],
-            "logradouro": row[1],
-            "tipo_logradouro": row[2],
-            "bairro": row[3],
-            "cidade": row[4],
-            "cep": row[5],
-            "tipo": row[6],
-            "valor": row[7],
-            "data_aquisicao": row[8]
-        })
+    
+    imoveis = [utils.row_to_imoveis(row) for row in rows]
+    
 
     return jsonify({"imoveis": imoveis})
 
@@ -36,18 +25,8 @@ def get_imovel_por_id(id):
     rows = cursor.fetchall()
     if not rows:
         return jsonify({"imovel": None}), 404
-    row = rows[0]
-    imovel = {
-        "id": row[0],
-        "logradouro": row[1],
-        "tipo_logradouro": row[2],
-        "bairro": row[3],
-        "cidade": row[4],
-        "cep": row[5],
-        "tipo": row[6],
-        "valor": row[7],
-        "data_aquisicao": row[8]
-    }
+    
+    imovel = utils.row_to_imovel(rows[0])
     return jsonify({"imovel": imovel})
 
 def cria_imovel_db(dados):
@@ -88,19 +67,8 @@ def get_imoveis_por_tipo(tipo):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis WHERE tipo =?", (tipo,))
     rows = cursor.fetchall()
-    imoveis = []
-    for row in rows:
-        imoveis.append({
-            "id": row[0],
-            "logradouro": row[1],
-            "tipo_logradouro": row[2],
-            "bairro": row[3],
-            "cidade": row[4],
-            "cep": row[5],
-            "tipo": row[6],
-            "valor": row[7],
-            "data_aquisicao": row[8]
-        })
+    imoveis = [utils.row_to_imovel() for row in rows]
+    
     return jsonify({"imoveis": imoveis})
 
 @app.route("/imoveis/cidade/<cidade>", methods=["GET"])
@@ -109,17 +77,42 @@ def get_imoveis_por_cidade(cidade):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis WHERE cidade =?", (cidade,))
     rows = cursor.fetchall()
-    imoveis = []
-    for row in rows:
-        imoveis.append({
-            "id": row[0],
-            "logradouro": row[1],
-            "tipo_logradouro": row[2],
-            "bairro": row[3],
-            "cidade": row[4],
-            "cep": row[5],
-            "tipo": row[6],
-            "valor": row[7],
-            "data_aquisicao": row[8]
-        })
+    imoveis = [utils.row_to_imovel() for row in rows]
+    
     return jsonify({"imoveis": imoveis})
+
+@app.route("/imoveis/<int:id>", methods=["PUT"])
+def atualiza_imoveis(id):
+    data = request.get_json()
+    conn = utils.connect_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    rows = cursor.fetchall()
+    if not rows:
+        return jsonify({"imovel": None}), 404
+
+    
+    cursor.execute("""
+        UPDATE imoveis
+        SET logradouro=?, tipo_logradouro=?, bairro=?, cidade=?, cep=?, tipo=?, valor=?, data_aquisicao=?
+        WHERE id=?
+    """, (
+        data["logradouro"],
+        data["tipo_logradouro"],
+        data["bairro"],
+        data["cidade"],
+        data["cep"],
+        data["tipo"],
+        data["valor"],
+        data["data_aquisicao"],
+        id
+    ))
+    conn.commit()
+
+    # busca de novo e converte com row_to_imovel
+    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    row = cursor.fetchone()
+    imovel = utils.row_to_imovel(row)
+
+    return jsonify({"imovel": imovel})

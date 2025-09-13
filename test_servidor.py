@@ -91,29 +91,62 @@ def test_get_imovel_por_id(mock_connect_db, client):
 }
     assert response.get_json() == expected_response
 
-@patch('utils.connect_db')
-def test_atualiza_imoveis(mock_connect_db): #Para rota PUT /imoveis/<id>
-    
+@patch("utils.connect_db")
+def test_atualiza_imoveis(mock_connect_db, client):
+    """Testa a rota PUT /imoveis/<id> sem acessar o banco real"""
+
     
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
     mock_connect_db.return_value = mock_conn
+
+    
+    mock_cursor.fetchall.side_effect = [
+        [(1, "Rua Velha", "Rua", "Centro", "São Paulo", "01000-000", "apartamento", 400000.0, "2020-01-01")],  # SELECT antes do update
+        [(1, "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000", "apartamento", 500000.0, "2023-01-01")]  # SELECT depois do update
+    ]
+
     
     dados_atualizados = {
-        "logradouro": "Rua nova",
+        "logradouro": "Rua Nova",
         "tipo_logradouro": "Avenida",
-        "bairro": "Itaim",
+        "bairro": "Centro",
         "cidade": "São Paulo",
-        "cep": "40028-922",
+        "cep": "01000-000",
         "tipo": "apartamento",
-        "valor": 19000.99,
-        "data_aquisicao": "2025-09-12"
+        "valor": 500000.0,
+        "data_aquisicao": "2023-01-01"
     }
+
     
-    response = client.put("/imoveis/1", json = dados_atualizados)
+    response = client.put(
+        "/imoveis/1",
+        json=dados_atualizados
+    )
+
     
-    assert response.status_code in [200,400]
+    assert response.status_code == 200
+    expected_response = {
+        "imovel": {
+            "id": 1,
+            **dados_atualizados
+        }
+    }
+    assert response.get_json() == expected_response
+
+    # garante que UPDATE e COMMIT foram chamados
+    mock_cursor.execute.assert_any_call(
+        """
+        UPDATE imoveis
+        SET logradouro=?, tipo_logradouro=?, bairro=?, cidade=?, cep=?, tipo=?, valor=?, data_aquisicao=?
+        WHERE id=?
+    """, (
+        "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000",
+        "apartamento", 500000.0, "2023-01-01", 1
+    ))
+    mock_conn.commit.assert_called_once()
+
 
 @patch("utils.connect_db")  
 def test_cria_imovel_db(mock_connect_db):
@@ -236,3 +269,5 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
         ]
     }
     assert response.get_json() == expected_response
+    
+    
