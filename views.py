@@ -1,25 +1,24 @@
 import utils
-def listar_imoveis():
-    conn = utils.connect_db()
+from mysql.connector import Error
+
+def listar_imoveis(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis")
     rows = cursor.fetchall()
     imoveis = [utils.row_to_imovel(row) for row in rows]
-    conn.close()
+    cursor.close()
     return imoveis
 
-def get_imovel_por_id(id):
-    conn = utils.connect_db()
+def get_imovel_por_id(conn, id):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM imoveis WHERE id =?", (id,))
+    cursor.execute("SELECT * FROM imoveis WHERE id =%s", (id,))
     rows = cursor.fetchall()
-    conn.close()
+    cursor.close()
     if not rows:
         return None
     return utils.row_to_imovel(rows[0])
 
-def cria_imovel_db(dados):
-    conn = utils.connect_db()
+def cria_imovel_db(conn, dados):
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -38,39 +37,36 @@ def cria_imovel_db(dados):
         )
     )
     conn.commit()
-    conn.close()
+    cursor.close()
     return True
 
-def get_imoveis_por_tipo(tipo):
-    conn = utils.connect_db()
+def get_imoveis_por_tipo(conn, tipo):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM imoveis WHERE tipo =?", (tipo,))
+    cursor.execute("SELECT * FROM imoveis WHERE tipo =%s", (tipo,))
     rows = cursor.fetchall()
     imoveis = [utils.row_to_imovel(row) for row in rows]
-    conn.close()
+    cursor.close()
     return imoveis
 
-def get_imoveis_por_cidade(cidade):
-    conn = utils.connect_db()
+def get_imoveis_por_cidade(conn, cidade):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM imoveis WHERE cidade =?", (cidade,))
+    cursor.execute("SELECT * FROM imoveis WHERE cidade =%s", (cidade,))
     rows = cursor.fetchall()
     imoveis = [utils.row_to_imovel(row) for row in rows]
-    conn.close()
+    cursor.close()
     return imoveis
 
-def atualiza_imovel(id, data):
-    conn = utils.connect_db()
+def atualiza_imovel(conn, id, data):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM imoveis WHERE id=%s", (id,))
     rows = cursor.fetchall()
     if not rows:
-        conn.close()
+        cursor.close()
         return None
     cursor.execute("""
         UPDATE imoveis
-        SET logradouro=?, tipo_logradouro=?, bairro=?, cidade=?, cep=?, tipo=?, valor=?, data_aquisicao=?
-        WHERE id=?
+        SET logradouro=%s, tipo_logradouro=%s, bairro=%s, cidade=%s, cep=%s, tipo=%s, valor=%s, data_aquisicao=%s
+        WHERE id=%s
     """, (
         data["logradouro"],
         data["tipo_logradouro"],
@@ -83,21 +79,20 @@ def atualiza_imovel(id, data):
         id
     ))
     conn.commit()
-    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM imoveis WHERE id=%s", (id,))
     row = cursor.fetchone()
     imovel = utils.row_to_imovel(row)
-    conn.close()
+    cursor.close()
     return imovel
 
-def delete_imovel(id):
-    conn = utils.connect_db()
+def delete_imovel(conn, id):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM imoveis WHERE id=?", (id,))
+    cursor.execute("SELECT * FROM imoveis WHERE id=%s", (id,))
     rows = cursor.fetchall()
     if not rows:
-        conn.close()
+        cursor.close()
         return False
-    cursor.execute("DELETE FROM imoveis WHERE id=?", (id,))
+    cursor.execute("DELETE FROM imoveis WHERE id=%s", (id,))
     conn.commit()
-    conn.close()
+    cursor.close()
     return True

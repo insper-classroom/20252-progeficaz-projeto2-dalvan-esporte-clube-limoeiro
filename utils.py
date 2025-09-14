@@ -1,8 +1,3 @@
-import sqlite3
-
-def connect_db():
-    return sqlite3.connect('imoveis.sql')
-
 def row_to_imovel(row):
     return {
         "id": row[0],
