@@ -143,3 +143,6 @@ def delete_imovel(id):
     finally:
         if conn and conn.is_connected():
             conn.close()
+
+if __name__ == '__main__':
+    app.run(debug=True)
