@@ -1,6 +1,5 @@
 import pytest
 import views
-from flask import Flask
 from unittest.mock import patch, MagicMock
 from servidor import app
 
@@ -10,7 +9,7 @@ def client():
     with app.test_client() as client:
         yield client
 
-@patch("utils.connect_db")  
+@patch("servidor.connect_db")  
 def test_get_imoveis(mock_connect_db, client):
     """Testa a rota GET /imoveis sem acessar o banco de dados real"""
 
@@ -30,9 +29,8 @@ def test_get_imoveis(mock_connect_db, client):
     response = client.get("/imoveis")
 
     assert response.status_code == 200
-    expected_response = {
-        "imoveis": [
-            {
+    expected_response = {"imoveis":
+            [{
                 "id": 1,
                 "logradouro": "Nicole Common",
                 "tipo_logradouro": "Travessa",
@@ -54,11 +52,10 @@ def test_get_imoveis(mock_connect_db, client):
                 "valor": 260069.89,
                 "data_aquisicao": "2021-11-30"
             }
-        ]
-    }
+        ]}
     assert response.get_json() == expected_response
     
-@patch("utils.connect_db")  
+@patch("servidor.connect_db")  
 def test_get_imovel_por_id(mock_connect_db, client):
     """Testa a rota GET /imoveis/id sem acessar o banco de dados real"""
 
@@ -92,7 +89,7 @@ def test_get_imovel_por_id(mock_connect_db, client):
 }
     assert response.get_json() == expected_response
 
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_atualiza_imoveis_sucesso(mock_connect_db, client):
     """Testa PUT /imoveis/<id> quando o imóvel existe"""
 
@@ -137,8 +134,8 @@ def test_atualiza_imoveis_sucesso(mock_connect_db, client):
     mock_cursor.execute.assert_any_call(
         """
         UPDATE imoveis
-        SET logradouro=?, tipo_logradouro=?, bairro=?, cidade=?, cep=?, tipo=?, valor=?, data_aquisicao=?
-        WHERE id=?
+        SET logradouro=%s, tipo_logradouro=%s, bairro=%s, cidade=%s, cep=%s, tipo=%s, valor=%s, data_aquisicao=%s
+        WHERE id=%s
     """, (
         "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000",
         "apartamento", 500000.0, "2023-01-01", 1
@@ -146,7 +143,7 @@ def test_atualiza_imoveis_sucesso(mock_connect_db, client):
     mock_conn.commit.assert_called_once()
 
 
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_atualiza_imoveis_nao_encontrado(mock_connect_db, client):
     """Testa PUT /imoveis/<id> quando o imóvel não existe"""
 
@@ -178,11 +175,11 @@ def test_atualiza_imoveis_nao_encontrado(mock_connect_db, client):
     assert response.get_json() == {"imovel": None}
 
     
-    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=?", (999,))
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=%s", (999,))
     mock_conn.commit.assert_not_called()
 
 
-@patch("utils.connect_db")  
+@patch("servidor.connect_db")  
 def test_cria_imovel_db(mock_connect_db):
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
@@ -200,7 +197,7 @@ def test_cria_imovel_db(mock_connect_db):
         "data_aquisicao": "2021-11-30"
     }
 
-    views.cria_imovel_db(dados_imovel)
+    views.cria_imovel_db(mock_conn, dados_imovel)
 
     mock_cursor.execute.assert_called_with(
         """
@@ -219,9 +216,8 @@ def test_cria_imovel_db(mock_connect_db):
         )
     )
     mock_conn.commit.assert_called_once()
-    mock_conn.close.assert_called_once()
 
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_lista_imovel_por_tipo(mock_connect_db, client):
     """Testa a rota GET /imoveis/tipo/<tipo> sem acessar o banco de dados real"""
     mock_conn = MagicMock()
@@ -262,7 +258,7 @@ def test_lista_imovel_por_tipo(mock_connect_db, client):
     }
     assert response.get_json() == expected_response
 
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_lista_imovel_por_cidade(mock_connect_db, client):
     """Testa a rota GET /imoveis/cidade/<cidade> sem acessar o banco de dados real"""
     mock_conn = MagicMock()
@@ -303,7 +299,7 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
     }
     assert response.get_json() == expected_response
     
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_delete_imovel_sucesso(mock_connect_db, client):
     """Testa DELETE /imoveis/<id> quando o imóvel existe"""
 
@@ -326,11 +322,11 @@ def test_delete_imovel_sucesso(mock_connect_db, client):
     assert response.get_json() == {"mensagem": "Imóvel removido com sucesso."}
 
     
-    mock_cursor.execute.assert_any_call("DELETE FROM imoveis WHERE id=?", (1,))
+    mock_cursor.execute.assert_any_call("DELETE FROM imoveis WHERE id=%s", (1,))
     mock_conn.commit.assert_called_once()
 
 
-@patch("utils.connect_db")
+@patch("servidor.connect_db")
 def test_delete_imovel_nao_encontrado(mock_connect_db, client):
     """Testa DELETE /imoveis/<id> quando o imóvel não existe"""
 
@@ -350,5 +346,5 @@ def test_delete_imovel_nao_encontrado(mock_connect_db, client):
     assert response.get_json() == {"imovel": None}
 
     
-    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=?", (999,))
+    mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=%s", (999,))
     mock_conn.commit.assert_not_called()
