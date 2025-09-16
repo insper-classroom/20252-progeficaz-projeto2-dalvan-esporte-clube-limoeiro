@@ -49,6 +49,12 @@ def db_connection_handler(f):
 @db_connection_handler
 def listar_imoveis(conn):
     imoveis = views.listar_imoveis(conn)
+    for imovel in imoveis:
+        imovel['z_links'] = {
+            'self': {
+                'href': url_for('get_imovel_por_id', id=imovel['id'], _external=True), 'method': 'GET'
+            }
+        }
     return jsonify(imoveis)
     
 
@@ -59,11 +65,11 @@ def get_imovel_por_id(conn, id):
     if imovel is None:
         return jsonify({"mensagem": "imóvel não encontrado"}), 404
     
-    imovel['_links'] = {
-        'self': {'href': url_for('get_imovel_por_id', id=id, _external=True)},
-        'update': {'href': url_for('atualiza_imoveis', id=id, _external=True)},
-        'delete': {'href': url_for('delete_imovel', id=id, _external=True)},
-        'collection': {'href': url_for('listar_imoveis', _external=True)}
+    imovel['z_links'] = {
+        'self': {'href': url_for('get_imovel_por_id', id=id, _external=True), 'method': 'GET'},
+        'update': {'href': url_for('atualiza_imoveis', id=id, _external=True), 'method': 'PUT'},
+        'delete': {'href': url_for('delete_imovel', id=id, _external=True), 'method': 'DELETE'},
+        'collection': {'href': url_for('listar_imoveis', _external=True), 'method': 'GET'}
     }
     
     return jsonify(imovel)
@@ -76,7 +82,7 @@ def cria_imovel(conn):
     
     location_url = url_for('get_imovel_por_id', id=imovel_criado['id'], _external=True)
 
-    imovel_criado['_links'] = {'self': {'href': location_url}}
+    imovel_criado['z_links'] = {'self': {'href': location_url, 'method': 'GET'}}
 
     response = make_response(jsonify(imovel_criado), 201)
     response.headers['Location'] = location_url
