@@ -29,8 +29,8 @@ def test_get_imoveis(mock_connect_db, client):
     response = client.get("/imoveis")
 
     assert response.status_code == 200
-    expected_response = {"imoveis":
-            [{
+    expected_response =[
+        {
                 "id": 1,
                 "logradouro": "Nicole Common",
                 "tipo_logradouro": "Travessa",
@@ -52,7 +52,7 @@ def test_get_imoveis(mock_connect_db, client):
                 "valor": 260069.89,
                 "data_aquisicao": "2021-11-30"
             }
-        ]}
+        ]
     assert response.get_json() == expected_response
     
 @patch("servidor.connect_db")  
@@ -67,15 +67,15 @@ def test_get_imovel_por_id(mock_connect_db, client):
     mock_connect_db.return_value = mock_conn
 
 
-    mock_cursor.fetchall.return_value = [
-        (2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', '93354', 'casa em condominio', 260069.89, '2021-11-30'),
-    ]
+    mock_cursor.fetchone.return_value =     mock_cursor.fetchone.return_value = (
+    2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', 
+    '93354', 'casa em condominio', 260069.89, '2021-11-30'
+    )
 
     response = client.get("/imoveis/2")
 
     assert response.status_code == 200
-    expected_response = {
-    "imovel": {
+    expected_response ={
         "id": 2,
         "logradouro": "Price Prairie",
         "tipo_logradouro": "Travessa",
@@ -86,7 +86,6 @@ def test_get_imovel_por_id(mock_connect_db, client):
         "valor": 260069.89,
         "data_aquisicao": "2021-11-30"
     }
-}
     assert response.get_json() == expected_response
 
 @patch("servidor.connect_db")
@@ -126,9 +125,8 @@ def test_atualiza_imoveis_sucesso(mock_connect_db, client):
 
     
     assert response.status_code == 200
-    assert response.get_json() == {
-        "imovel": {"id": 1, **dados_atualizados}
-    }
+    assert response.get_json() == {"id": 1, **dados_atualizados}
+    
 
     
     mock_cursor.execute.assert_any_call(
@@ -172,7 +170,7 @@ def test_atualiza_imoveis_nao_encontrado(mock_connect_db, client):
 
     
     assert response.status_code == 404
-    assert response.get_json() == {"imovel": None}
+    assert response.get_json() == {"mensagem": "imóvel não encontrado"}
 
     
     mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=%s", (999,))
@@ -230,8 +228,7 @@ def test_lista_imovel_por_tipo(mock_connect_db, client):
     ]
     response = client.get("/imoveis/tipo/casa em condominio")
     assert response.status_code == 200
-    expected_response = {
-        "imoveis": [
+    expected_response = [
             {
                 "id": 1,
                 "logradouro": "Nicole Common",
@@ -255,7 +252,6 @@ def test_lista_imovel_por_tipo(mock_connect_db, client):
                 "data_aquisicao": "2021-11-30"
             }
         ]
-    }
     assert response.get_json() == expected_response
 
 @patch("servidor.connect_db")
@@ -271,8 +267,7 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
     ]
     response = client.get("/imoveis/cidade/North Garyville")
     assert response.status_code == 200
-    expected_response = {
-        "imoveis": [
+    expected_response = [
             {
                 "id": 1,
                 "logradouro": "Nicole Common",
@@ -296,7 +291,6 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
                 "data_aquisicao": "2021-11-30"
             }
         ]
-    }
     assert response.get_json() == expected_response
     
 @patch("servidor.connect_db")
@@ -319,7 +313,7 @@ def test_delete_imovel_sucesso(mock_connect_db, client):
 
     
     assert response.status_code == 200
-    assert response.get_json() == {"mensagem": "Imóvel removido com sucesso."}
+    assert response.get_json() == {"mensagem": "imóvel removido com sucesso."}
 
     
     mock_cursor.execute.assert_any_call("DELETE FROM imoveis WHERE id=%s", (1,))
@@ -343,8 +337,36 @@ def test_delete_imovel_nao_encontrado(mock_connect_db, client):
 
     
     assert response.status_code == 404
-    assert response.get_json() == {"imovel": None}
+    assert response.get_json() == {"mensagem": "imóvel não encontrado"}
 
     
     mock_cursor.execute.assert_called_once_with("SELECT * FROM imoveis WHERE id=%s", (999,))
     mock_conn.commit.assert_not_called()
+
+@patch("servidor.connect_db")
+def test_get_imovel_por_id_retorna_links_hateoas(mock_connect_db, client):
+    """Testa se a rota GET /imoveis/<id> retorna os links HATEOAS corretos."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+    
+    mock_cursor.fetchone.return_value = (
+    2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', 
+    '93354', 'casa em condominio', 260069.89, '2021-11-30'
+    )
+    
+    response = client.get("/imoveis/1")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    
+    assert "_links" in data
+    links = data["_links"]
+    assert "self" in links
+    assert "update" in links
+    assert "delete" in links
+    assert "collection" in links
+    
+    assert links["self"]["href"] == "http://localhost/imoveis/1"
+    assert links["collection"]["href"] == "http://localhost/imoveis"
