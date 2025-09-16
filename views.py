@@ -12,11 +12,11 @@ def listar_imoveis(conn):
 def get_imovel_por_id(conn, id):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM imoveis WHERE id =%s", (id,))
-    rows = cursor.fetchall()
+    row = cursor.fetchone()
     cursor.close()
-    if not rows:
+    if not row:
         return None
-    return utils.row_to_imovel(rows[0])
+    return utils.row_to_imovel(row)
 
 def cria_imovel_db(conn, dados):
     cursor = conn.cursor()
@@ -36,9 +36,14 @@ def cria_imovel_db(conn, dados):
             dados["data_aquisicao"]
         )
     )
+    
+    novo_id = cursor.lastrowid
+    
     conn.commit()
     cursor.close()
-    return True
+    
+    dados['id'] = novo_id
+    return dados
 
 def get_imoveis_por_tipo(conn, tipo):
     cursor = conn.cursor()
