@@ -25,7 +25,7 @@ Inclui operações de criação, leitura, atualização e exclusão (CRUD), alé
 
 - **Python 3.10+**
 - **Flask** → Framework web
-- **SQLite3** → Banco de dados
+- **MySQL** → Banco de dados
 - **pytest** → Framework de testes
 - **unittest.mock** → Mock de dependências externas
 
@@ -48,20 +48,31 @@ venv\Scripts\activate      # Windows
 
 ### 3. Instalar dependências
 ```bash
-pip install flask pytest
+pip install -r requirements.txt
 ```
 
-### 4. Inicializar banco de dados
-```bash
-sqlite3 imoveis.db < imoveis.sql
-```
+### 4. Configure as variáveis de ambiente:**
+    -   Crie uma cópia do arquivo `template.cred` e renomeie para `.cred`.
+    -   Preencha o arquivo `.cred` com as suas credenciais de acesso ao banco de dados MySQL.
+    
+    _Exemplo de arquivo `.cred`:_
+    ```ini
+    DB_HOST=localhost
+    DB_USER=seu_usuario
+    DB_PASSWORD=sua_senha
+    DB_NAME=db_escola
+    DB_PORT=3306
+    ```
 
-### 5. Executar o servidor
-```bash
-python servidor.py
-```
+### 5. Crie a tabela no banco de dados:**
+    -   Certifique-se de que o banco de dados (`db_escola` ou outro nome que você definiu) exista.
+    -   Execute um script SQL para criar a tabela `imoveis`. (Ex: `schema.sql`).
+    ```bash
+    # Exemplo de como executar o script
+    mysql -u seu_usuario -p db_escola < schema.sql
+    ```
 
-O servidor rodará em **http://127.0.0.1:5000**
+O servidor rodará em **http://18.209.61.5**
 
 ---
 
@@ -75,9 +86,42 @@ GET /imoveis
 Resposta:
 ```json
 [
-  {"id": 1, "nome": "Casa A", "valor": 500000},
-  {"id": 2, "nome": "Apartamento B", "valor": 350000}
-]
+        {
+                "id": 1,
+                "logradouro": "Nicole Common",
+                "tipo_logradouro": "Travessa",
+                "bairro": "Lake Danielle",
+                "cidade": "Judymouth",
+                "cep": "85184",
+                "tipo": "casa em condominio",
+                "valor": 488423.52,
+                "data_aquisicao": "2017-07-29",
+                "z_links": {
+                    "self": {
+                        "href": "http://18.209.61.5/imoveis/1",
+                        "method": "GET"
+                    }
+                }
+            },
+            {
+                "id": 2,
+                "logradouro": "Price Prairie",
+                "tipo_logradouro": "Travessa",
+                "bairro": "Colonton",
+                "cidade": "North Garyville",
+                "cep": "93354",
+                "tipo": "casa em condominio",
+                "valor": 260069.89,
+                "data_aquisicao": "2021-11-30",
+                "z_links": {
+                    "self": {
+                        "href": "http://18.209.61.5/imoveis/2",
+                        "method": "GET"
+                    }
+                }
+                
+            }
+        ]
 ```
 
 ### 🔹 Buscar imóvel por ID
@@ -92,8 +136,14 @@ POST /imoveis
 Body (JSON):
 ```json
 {
-  "nome": "Terreno X",
-  "valor": 150000
+    "logradouro": "Avenida Paulista",
+    "tipo_logradouro": "Avenida",
+    "bairro": "Bela Vista",
+    "cidade": "São Paulo",
+    "cep": "01310-200",
+    "tipo": "Apartamento",
+    "valor": 1200000.00,
+    "data_aquisicao": "2025-08-15"
 }
 ```
 
@@ -104,7 +154,14 @@ PUT /imoveis/<id>
 Body (JSON):
 ```json
 {
-  "valor": 200000
+    "logradouro": "Avenida Paulista",
+    "tipo_logradouro": "Avenida",
+    "bairro": "Bela Vista",
+    "cidade": "Belo Horizonte",
+    "cep": "01310-200",
+    "tipo": "Apartamento",
+    "valor": 1200000.00,
+    "data_aquisicao": "2025-08-15"
 }
 ```
 
