@@ -39,7 +39,13 @@ def test_get_imoveis(mock_connect_db, client):
                 "cep": "85184",
                 "tipo": "casa em condominio",
                 "valor": 488423.52,
-                "data_aquisicao": "2017-07-29"
+                "data_aquisicao": "2017-07-29",
+                "z_links": {
+                    "self": {
+                        "href": "http://localhost/imoveis/1",
+                        "method": "GET"
+                    }
+                }
             },
             {
                 "id": 2,
@@ -50,7 +56,14 @@ def test_get_imoveis(mock_connect_db, client):
                 "cep": "93354",
                 "tipo": "casa em condominio",
                 "valor": 260069.89,
-                "data_aquisicao": "2021-11-30"
+                "data_aquisicao": "2021-11-30",
+                "z_links": {
+                    "self": {
+                        "href": "http://localhost/imoveis/2",
+                        "method": "GET"
+                    }
+                }
+                
             }
         ]
     assert response.get_json() == expected_response
@@ -83,11 +96,11 @@ def test_get_imovel_por_id(mock_connect_db, client):
         "tipo": "casa em condominio",
         "valor": 260069.89,
         "data_aquisicao": "2021-11-30",
-        "_links": {
-            "self": {"href": "http://localhost/imoveis/2"},
-            "update": {"href": "http://localhost/imoveis/2"},
-            "delete": {"href": "http://localhost/imoveis/2"},
-            "collection": {"href": "http://localhost/imoveis"}
+        "z_links": {
+            "self": {"href": "http://localhost/imoveis/2", "method": "GET"},
+            "update": {"href": "http://localhost/imoveis/2", "method": "PUT"},
+            "delete": {"href": "http://localhost/imoveis/2", "method": "DELETE"},
+            "collection": {"href": "http://localhost/imoveis", "method": "GET"}
         }
     }
     
@@ -366,8 +379,8 @@ def test_get_imovel_por_id_retorna_links_hateoas(mock_connect_db, client):
 
     assert response.status_code == 200
     
-    assert "_links" in data
-    links = data["_links"]
+    assert "z_links" in data
+    links = data["z_links"]
     assert "self" in links
     assert "update" in links
     assert "delete" in links
@@ -392,3 +405,31 @@ def test_cria_imovel_retorna_header_location(mock_connect_db, client):
     assert response.status_code == 201
     assert "Location" in response.headers
     assert response.headers["Location"] == "http://localhost/imoveis/101"
+    
+@patch("servidor.connect_db")
+def test_listar_imoveis_retorna_links_em_cada_item(mock_connect_db, client):
+    """Testa se GET /imoveis retorna uma lista onde cada item tem seu link HATEOAS."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
+    mock_cursor.fetchall.return_value = [
+        (1, 'Rua das Flores', 'Rua', 'Jardim', 'Campinas', '13000-000', 'casa', 250000, '2022-01-15'),
+        (2, 'Avenida Principal', 'Avenida', 'Centro', 'São Paulo', '01000-000', 'apartamento', 500000, '2021-05-20'),
+    ]
+
+    response = client.get("/imoveis")
+    data = response.get_json()
+
+    assert response.status_code == 200
+    assert isinstance(data, list) 
+    assert len(data) == 2         
+
+    assert "z_links" in data[0]
+    assert "self" in data[0]["z_links"]
+    assert data[0]["z_links"]["self"]["href"] == "http://localhost/imoveis/1"
+
+    assert "z_links" in data[1]
+    assert "self" in data[1]["z_links"]
+    assert data[1]["z_links"]["self"]["href"] == "http://localhost/imoveis/2"
