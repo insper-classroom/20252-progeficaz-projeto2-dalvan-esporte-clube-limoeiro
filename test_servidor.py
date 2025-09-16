@@ -558,4 +558,42 @@ def test_lista_imovel_por_tipo_retorna_links_em_cada_item(mock_connect_db, clien
     assert links2["self"]["href"] == "http://localhost/imoveis/2"
     assert links2["self"]["method"] == "GET"
    
+
+
+@patch("servidor.connect_db")
+def test_lista_imoveis_por_cidade_retorna_links(mock_connect_db, client):
+    """Testa se GET /imoveis/cidade/<cidade> retorna imóveis com links HATEOAS."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+
     
+    mock_cursor.fetchall.return_value = [
+        (1, 'Rua A', 'Rua', 'Bairro A', 'Campinas', '13000-000', 'casa', 250000, '2022-01-15'),
+        (2, 'Avenida B', 'Avenida', 'Bairro B', 'Campinas', '13000-111', 'apartamento', 500000, '2021-05-20'),
+    ]
+
+    response = client.get("/imoveis/cidade/Campinas")
+    data = response.get_json()
+
+    
+    assert response.status_code == 200
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+    
+    imovel1 = data[0]
+    assert imovel1["id"] == 1
+    assert imovel1["cidade"] == "Campinas"
+    assert "z_links" in imovel1
+    assert imovel1["z_links"]["self"]["href"] == "http://localhost/imoveis/1"
+    assert imovel1["z_links"]["self"]["method"] == "GET"
+
+    
+    imovel2 = data[1]
+    assert imovel2["id"] == 2
+    assert imovel2["cidade"] == "Campinas"
+    assert "z_links" in imovel2
+    assert imovel2["z_links"]["self"]["href"] == "http://localhost/imoveis/2"
+    assert imovel2["z_links"]["self"]["method"] == "GET"
