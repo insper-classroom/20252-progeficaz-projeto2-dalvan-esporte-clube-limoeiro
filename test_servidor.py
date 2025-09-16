@@ -433,3 +433,68 @@ def test_listar_imoveis_retorna_links_em_cada_item(mock_connect_db, client):
     assert "z_links" in data[1]
     assert "self" in data[1]["z_links"]
     assert data[1]["z_links"]["self"]["href"] == "http://localhost/imoveis/2"
+    
+    
+@patch("servidor.connect_db")
+def test_atualiza_imoveis_sucesso_retorna_links_em_cada_item(mock_connect_db, client):
+    """Testa se GET /imoveis retorna uma lista onde cada item tem seu link HATEOAS."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+    data = response.get_json()
+    
+    mock_cursor.fetchall.return_value = [
+        (1, "Rua Velha", "Rua", "Centro", "São Paulo", "01000-000", "apartamento", 400000.0, "2020-01-01")
+    ]
+
+    
+    mock_cursor.fetchone.return_value = (
+        1, "Rua Nova", "Avenida", "Centro", "São Paulo", "01000-000",
+        "apartamento", 500000.0, "2023-01-01"
+    )
+
+    
+    dados_atualizados = {
+        "logradouro": "Rua Nova",
+        "tipo_logradouro": "Avenida",
+        "bairro": "Centro",
+        "cidade": "São Paulo",
+        "cep": "01000-000",
+        "tipo": "apartamento",
+        "valor": 500000.0,
+        "data_aquisicao": "2023-01-01"
+    }
+    
+    
+    response = client.put("/imoveis/1", json=dados_atualizados)
+
+    assert response.status_code == 200
+    
+    assert data["id"] == 1
+    for key, value in dados_atualizados.items():
+        assert data[key] == value
+
+    
+    assert "z_links" in data
+    links = data["z_links"]
+
+    assert "self" in links
+    assert links["self"]["href"] == "http://localhost/imoveis/1"
+    assert links["self"]["method"] == "GET"
+
+    assert "update" in links
+    assert links["update"]["href"] == "http://localhost/imoveis/1"
+    assert links["update"]["method"] == "PUT"
+
+    assert "delete" in links
+    assert links["delete"]["href"] == "http://localhost/imoveis/1"
+    assert links["delete"]["method"] == "DELETE"
+
+    assert "collection" in links
+    assert links["collection"]["href"] == "http://localhost/imoveis"
+    assert links["collection"]["method"] == "GET"
+    
+    
+    
+    
