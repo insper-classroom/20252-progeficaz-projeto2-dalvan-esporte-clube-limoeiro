@@ -266,7 +266,8 @@ def test_lista_imovel_por_tipo(mock_connect_db, client):
                 "cep": "85184",
                 "tipo": "casa em condominio",
                 "valor": 488423.52,
-                "data_aquisicao": "2017-07-29"
+                "data_aquisicao": "2017-07-29",
+                "z_links": { "self": {"href": "http://localhost/imoveis/1","method": "GET"}}
             },
             {
                 "id": 2,
@@ -277,7 +278,8 @@ def test_lista_imovel_por_tipo(mock_connect_db, client):
                 "cep": "93354",
                 "tipo": "casa em condominio",
                 "valor": 260069.89,
-                "data_aquisicao": "2021-11-30"
+                "data_aquisicao": "2021-11-30",
+                "z_links": { "self": {"href": "http://localhost/imoveis/2","method": "GET"}}
             }
         ]
     assert response.get_json() == expected_response
@@ -507,5 +509,53 @@ def test_atualiza_imoveis_sucesso_retorna_links_em_cada_item(mock_connect_db, cl
     assert links["collection"]["method"] == "GET"
     
 
+     
+@patch("servidor.connect_db")
+def test_lista_imovel_por_tipo_retorna_links_em_cada_item(mock_connect_db, client):
+    """Testa a rota GET /imoveis/tipo/<tipo> verificando dados e links HATEOAS."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
     
+
+    mock_cursor.fetchall.return_value = [
+        (1, 'Nicole Common', 'Travessa', 'Lake Danielle', 'Judymouth', '85184', 'casa em condominio', 488423.52, '2017-07-29'),
+        (2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', '93354', 'casa em condominio', 260069.89, '2021-11-30'),
+    ]
+    
+    response = client.get("/imoveis/tipo/casa em condominio")
+    data = response.get_json()
+
+    
+    assert response.status_code == 200
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+    
+    imovel1 = data[0]
+    assert imovel1["id"] == 1
+    assert imovel1["logradouro"] == "Nicole Common"
+    assert imovel1["tipo_logradouro"] == "Travessa"
+    assert imovel1["bairro"] == "Lake Danielle"
+    assert imovel1["cidade"] == "Judymouth"
+    assert imovel1["tipo"] == "casa em condominio"
+    assert imovel1["valor"] == 488423.52
+    assert imovel1["data_aquisicao"] == "2017-07-29"
+
+    assert "z_links" in imovel1
+    links1 = imovel1["z_links"]
+    assert links1["self"]["href"] == "http://localhost/imoveis/1"
+    assert links1["self"]["method"] == "GET"
+
+    imovel2 = data[1]
+    assert imovel2["id"] == 2
+    assert imovel2["logradouro"] == "Price Prairie"
+    assert imovel2["cidade"] == "North Garyville"
+
+    assert "z_links" in imovel2
+    links2 = imovel2["z_links"]
+    assert links2["self"]["href"] == "http://localhost/imoveis/2"
+    assert links2["self"]["method"] == "GET"
+   
     
