@@ -375,3 +375,20 @@ def test_get_imovel_por_id_retorna_links_hateoas(mock_connect_db, client):
     
     assert links["self"]["href"] == "http://localhost/imoveis/1"
     assert links["collection"]["href"] == "http://localhost/imoveis"
+
+@patch("servidor.connect_db")    
+def test_cria_imovel_retorna_header_location(mock_connect_db, client):
+    """Testa se a rota POST /imoveis retorna o cabeçalho Location."""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_connect_db.return_value = mock_conn
+    mock_cursor.lastrowid = 101
+
+    novo_imovel_data = {"logradouro": "Rua TDD", "tipo": "casa", "cidade": "Teste", "valor": 1, "data_aquisicao": "2025-01-01", "tipo_logradouro":"Rua", "bairro": "Centro", "cep":"123456"}
+
+    response = client.post("/imoveis", json=novo_imovel_data)
+
+    assert response.status_code == 201
+    assert "Location" in response.headers
+    assert response.headers["Location"] == "http://localhost/imoveis/101"
