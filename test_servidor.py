@@ -307,7 +307,8 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
                 "cep": "85184",
                 "tipo": "casa",
                 "valor": 488423.52,
-                "data_aquisicao": "2017-07-29"
+                "data_aquisicao": "2017-07-29",
+                "z_links": { "self": {"href": "http://localhost/imoveis/1","method": "GET"}}
             },
             {
                 "id": 2,
@@ -318,7 +319,8 @@ def test_lista_imovel_por_cidade(mock_connect_db, client):
                 "cep": "93354",
                 "tipo": "casa em condominio",
                 "valor": 260069.89,
-                "data_aquisicao": "2021-11-30"
+                "data_aquisicao": "2021-11-30",
+                "z_links": { "self": {"href": "http://localhost/imoveis/2","method": "GET"}}
             }
         ]
     assert response.get_json() == expected_response

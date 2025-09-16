@@ -103,6 +103,8 @@ def get_imoveis_por_tipo(conn, tipo):
 @db_connection_handler
 def get_imoveis_por_cidade(conn, cidade):
     imoveis = views.get_imoveis_por_cidade(conn, cidade)
+    for imovel in imoveis:
+        imovel['z_links'] = {'self': {'href': url_for('get_imovel_por_id', id=imovel['id'], _external=True),'method': 'GET'}}
     return jsonify(imoveis)
 
 
