@@ -58,24 +58,22 @@ def test_get_imoveis(mock_connect_db, client):
 @patch("servidor.connect_db")  
 def test_get_imovel_por_id(mock_connect_db, client):
     """Testa a rota GET /imoveis/id sem acessar o banco de dados real"""
-
     
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
-
     mock_conn.cursor.return_value = mock_cursor
     mock_connect_db.return_value = mock_conn
 
-
-    mock_cursor.fetchone.return_value =     mock_cursor.fetchone.return_value = (
-    2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', 
-    '93354', 'casa em condominio', 260069.89, '2021-11-30'
+    mock_cursor.fetchone.return_value = (
+        2, 'Price Prairie', 'Travessa', 'Colonton', 'North Garyville', 
+        '93354', 'casa em condominio', 260069.89, '2021-11-30'
     )
 
     response = client.get("/imoveis/2")
 
     assert response.status_code == 200
-    expected_response ={
+    
+    expected_response = {
         "id": 2,
         "logradouro": "Price Prairie",
         "tipo_logradouro": "Travessa",
@@ -84,8 +82,15 @@ def test_get_imovel_por_id(mock_connect_db, client):
         "cep": "93354",
         "tipo": "casa em condominio",
         "valor": 260069.89,
-        "data_aquisicao": "2021-11-30"
+        "data_aquisicao": "2021-11-30",
+        "_links": {
+            "self": {"href": "http://localhost/imoveis/2"},
+            "update": {"href": "http://localhost/imoveis/2"},
+            "delete": {"href": "http://localhost/imoveis/2"},
+            "collection": {"href": "http://localhost/imoveis"}
+        }
     }
+    
     assert response.get_json() == expected_response
 
 @patch("servidor.connect_db")
