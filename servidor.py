@@ -108,7 +108,15 @@ def atualiza_imoveis(conn, id):
     imovel = views.atualiza_imovel(conn, id, data)
     if imovel is None:
         return jsonify({"mensagem": "imóvel não encontrado"}), 404
+
+    imovel['z_links'] = {
+        'self': {'href': url_for('get_imovel_por_id', id=id, _external=True),'method': 'GET'},
+        'update': {'href': url_for('atualiza_imoveis', id=id, _external=True),'method': 'PUT'},
+        'delete': {'href': url_for('delete_imovel', id=id, _external=True),'method': 'DELETE'},
+        'collection': {'href': url_for('listar_imoveis', _external=True),'method': 'GET'}
+    }
     return jsonify(imovel)
+
 
 @app.route("/imoveis/<int:id>", methods=["DELETE"])
 @db_connection_handler

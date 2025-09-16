@@ -143,7 +143,17 @@ def test_atualiza_imoveis_sucesso(mock_connect_db, client):
 
     
     assert response.status_code == 200
-    assert response.get_json() == {"id": 1, **dados_atualizados}
+    expected_response = {
+        "id": 1,
+        **dados_atualizados,
+        "z_links": {
+            "self": {"href": "http://localhost/imoveis/1", "method": "GET"},
+            "update": {"href": "http://localhost/imoveis/1", "method": "PUT"},
+            "delete": {"href": "http://localhost/imoveis/1", "method": "DELETE"},
+            "collection": {"href": "http://localhost/imoveis", "method": "GET"}
+        }
+    }
+    assert response.get_json() == expected_response
     
 
     
@@ -442,7 +452,7 @@ def test_atualiza_imoveis_sucesso_retorna_links_em_cada_item(mock_connect_db, cl
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
     mock_connect_db.return_value = mock_conn
-    data = response.get_json()
+    
     
     mock_cursor.fetchall.return_value = [
         (1, "Rua Velha", "Rua", "Centro", "São Paulo", "01000-000", "apartamento", 400000.0, "2020-01-01")
@@ -470,6 +480,7 @@ def test_atualiza_imoveis_sucesso_retorna_links_em_cada_item(mock_connect_db, cl
     response = client.put("/imoveis/1", json=dados_atualizados)
 
     assert response.status_code == 200
+    data = response.get_json()
     
     assert data["id"] == 1
     for key, value in dados_atualizados.items():
@@ -495,6 +506,6 @@ def test_atualiza_imoveis_sucesso_retorna_links_em_cada_item(mock_connect_db, cl
     assert links["collection"]["href"] == "http://localhost/imoveis"
     assert links["collection"]["method"] == "GET"
     
-    
+
     
     
