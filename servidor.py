@@ -79,6 +79,8 @@ def get_imovel_por_id(conn, id):
 def cria_imovel(conn):
     dados = request.get_json()
     imovel_criado = views.cria_imovel_db(conn, dados)
+    if len(imovel_criado) == 1:
+        return jsonify({"Erro": f"o parâmetro {imovel_criado[0]} está faltando"}), 400
     
     location_url = url_for('get_imovel_por_id', id=imovel_criado['id'], _external=True)
 
@@ -115,6 +117,8 @@ def atualiza_imoveis(conn, id):
     imovel = views.atualiza_imovel(conn, id, data)
     if imovel is None:
         return jsonify({"mensagem": "imóvel não encontrado"}), 404
+    if len(imovel) == 1:
+        return jsonify({"Erro": f"o parâmetro {imovel[0]} está faltando"}), 400
 
     imovel['z_links'] = {
         'self': {'href': url_for('get_imovel_por_id', id=id, _external=True),'method': 'GET'},

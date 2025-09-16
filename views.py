@@ -19,6 +19,10 @@ def get_imovel_por_id(conn, id):
     return utils.row_to_imovel(row)
 
 def cria_imovel_db(conn, dados):
+    required_params = ['logradouro', 'tipo_logradouro', 'bairro', 'cidade', 'cep', 'tipo', 'valor', 'data_aquisicao']
+    for param in required_params:
+        if param not in dados:
+            return [param]
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -68,6 +72,12 @@ def atualiza_imovel(conn, id, data):
     if not rows:
         cursor.close()
         return None
+    
+    required_params = ['logradouro', 'tipo_logradouro', 'bairro', 'cidade', 'cep', 'tipo', 'valor', 'data_aquisicao']
+    for param in required_params:
+        if param not in data:
+            return [param]
+   
     cursor.execute("""
         UPDATE imoveis
         SET logradouro=%s, tipo_logradouro=%s, bairro=%s, cidade=%s, cep=%s, tipo=%s, valor=%s, data_aquisicao=%s
